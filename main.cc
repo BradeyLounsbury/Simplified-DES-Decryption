@@ -9,6 +9,7 @@ void p10(bitset<10> &key_bits);
 bitset<5> shift(bitset<5> half_key);
 bitset<8> p8(bitset<5> left, bitset<5> right);
 bitset<8> IP(bitset<8> ch);
+bitset<8> EP(bitset<4> half);
 bitset<8> IP_1(bitset<8> ch);
 
 
@@ -64,6 +65,17 @@ int main() {
  
         cipher_ch = IP(cipher_ch);
         cout << "IP: " << cipher_ch << endl;
+
+        bitset<4> left, right;
+        for (size_t i = 0; i < 4; i++) {
+            right[i] = cipher_ch[i];
+            left[i] = cipher_ch[i+4];
+        }
+
+        bitset<8> expand (EP(right));
+        bitset<4> feistel (Sub(expand, k1));
+        
+        
     }
     
 
@@ -123,6 +135,80 @@ bitset<8> IP(bitset<8> ch) {
     perm[1] = ch[3];
     perm[0] = ch[1];
     return perm;
+}
+
+bitset<8> EP(bitset<4> half) {
+    bitset<8> exp;
+
+    exp[7] = half[0];
+    exp[6] = half[3];
+    exp[5] = half[2];
+    exp[4] = half[1];
+    exp[3] = half[2];
+    exp[2] = half[1];
+    exp[1] = half[0];
+    exp[0] = half[3];
+    return exp;
+}
+
+bitset<4> Sub(bitset<8> exp, bitset<8> key) {
+    exp = exp xor key;
+
+    bitset<4> left, right;
+    for (size_t i = 0; i < 4; i++) {
+        right[i] = cipher_ch[i];
+        left[i] = cipher_ch[i+4];
+    }
+    bitset<2> lsub, rsub;
+    lsub = get_lsub(left);
+    rsub = get_rsub(right);
+
+}
+
+bitset<2> get_lsub(bitset<4> left) {
+    bitset<2> lsub;
+    if (left.test(3)) {
+        if (left.test(0)) {  // row: 3
+            if (left.test(2)) {
+                if (left.test(1)) { // column: 3
+                    lsub = "10";
+                }
+                else {  // column: 2
+                    lsub = "11";
+                }
+            }
+            else {
+                if (left.test(1)) { // column: 1
+                    lsub = "01";
+                }
+                else {  // column: 0
+                    lsub = "11";
+                }
+            }
+        }
+        else {  // row: 2
+            if (left.test(2)) {
+                if (left.test(1)) { // column: 3
+                    lsub = "11";
+                }
+                else {  // column: 2
+                    lsub = "01";
+                }
+            }
+            else {
+                if (left.test(1)) { // column: 1
+                    lsub = "10";
+                }
+                else {  // column: 0
+                    lsub = "00";
+                }
+            }
+        }
+    }
+}
+
+bitset<2> get_rsub(bitset<4> right) {
+    bitset<2> rsub;
 }
 
 bitset<8> IP_1(bitset<8> ch) {
