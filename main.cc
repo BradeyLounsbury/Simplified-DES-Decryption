@@ -12,7 +12,6 @@ bitset<8> p8(bitset<5> left, bitset<5> right);
 
 int main() {
     string cipher_text, key;
-    // int cipher_text_bits[8], key_bits[10];
 
     // getline(cin, cipher_text);
     getline(cin, key);
@@ -25,6 +24,7 @@ int main() {
     bitset<10> key_bits (key);
 
     p10(key_bits);
+    
     bitset<5> left_half, right_half;
     
     for (size_t i = 0; i < 5; i++) {
@@ -57,8 +57,6 @@ int main() {
 }
 
 void p10(bitset<10> &key_bits) {
-    // 9 8 7 6 5 4 3 2 1 0
-    // 5 7 8 0 9 3 6 1 4 2
     bitset<10> key_perm = key_bits;
     key_bits[0] = key_perm[4];
     key_bits[1] = key_perm[2];
@@ -73,12 +71,6 @@ void p10(bitset<10> &key_bits) {
 }
 
 bitset<5> shift(bitset<5> half_key) {
-    // static int shifted[5];
-    // shifted[0] = half_key[1];
-    // shifted[1] = half_key[2];
-    // shifted[2] = half_key[3];
-    // shifted[3] = half_key[4];
-    // shifted[4] = half_key[0];
     if (half_key.test(4)) {
         half_key = half_key<<1;
         half_key.set(0,1);
@@ -90,19 +82,6 @@ bitset<5> shift(bitset<5> half_key) {
 }
 
 bitset<8> p8(bitset<5> left, bitset<5> right) {
-    // static int perm[8];
-    // perm[0] = *(right);
-    // perm[1] = *(left + 2);
-    // perm[2] = *(right + 1);
-    // perm[3] = *(left + 3);
-    // perm[4] = *(right + 2);
-    // perm[5] = *(left + 4);
-    // perm[6] = *(right + 4);
-    // perm[7] = *(right + 3);
-    // return perm;
-
-    // left = [5, 4, 3, 2, 1]
-    // right = [10, 9, 8, 7, 6]
     bitset<8> perm;
 
     perm[7] = right[4];
