@@ -8,12 +8,14 @@ using namespace std;
 void p10(bitset<10> &key_bits);
 bitset<5> shift(bitset<5> half_key);
 bitset<8> p8(bitset<5> left, bitset<5> right);
+bitset<8> IP(bitset<8> ch);
+bitset<8> IP_1(bitset<8> ch);
 
 
 int main() {
     string cipher_text, key;
 
-    // getline(cin, cipher_text);
+    getline(cin, cipher_text);
     getline(cin, key);
     
     if (!(key.length() == 10)) {
@@ -23,6 +25,7 @@ int main() {
     
     bitset<10> key_bits (key);
 
+    // key gen
     p10(key_bits);
     
     bitset<5> left_half, right_half;
@@ -41,6 +44,7 @@ int main() {
     bitset<5> right_shift_2 = shift(right_shift_1);
     right_shift_2 = shift(right_shift_2);
     bitset<8> k2 = p8(left_shift_2, right_shift_2);
+    // key gen done
 
     cout << "key: " << key << endl;
     cout << "key_bits after p10: " << key_bits << endl;
@@ -52,6 +56,18 @@ int main() {
     cout << "right half shifted 2: " << right_shift_2 << endl;
     cout << "k1: " << k1 << endl;
     cout << "k2: " << k2 << endl;
+
+    // decrypt
+    for (size_t i = 0; i < cipher_text.length(); i++) {
+        bitset<8> cipher_ch ((int)cipher_text[i]);
+        cout << "cipher_ch: " << cipher_ch << endl;
+ 
+        cipher_ch = IP(cipher_ch);
+        cout << "IP: " << cipher_ch << endl;
+    }
+    
+
+    
     
     return 0;
 }
@@ -92,5 +108,33 @@ bitset<8> p8(bitset<5> left, bitset<5> right) {
     perm[2] = left[0];
     perm[1] = right[0];
     perm[0] = right[1];
+    return perm;
+}
+
+bitset<8> IP(bitset<8> ch) {
+    bitset<8> perm;
+
+    perm[7] = ch[6];
+    perm[6] = ch[2];
+    perm[5] = ch[5];
+    perm[4] = ch[7];
+    perm[3] = ch[4];
+    perm[2] = ch[0];
+    perm[1] = ch[3];
+    perm[0] = ch[1];
+    return perm;
+}
+
+bitset<8> IP_1(bitset<8> ch) {
+    bitset<8> perm;
+
+    perm[7] = ch[4];
+    perm[6] = ch[7];
+    perm[5] = ch[5];
+    perm[4] = ch[3];
+    perm[3] = ch[1];
+    perm[2] = ch[6];
+    perm[1] = ch[0];
+    perm[0] = ch[2];
     return perm;
 }
