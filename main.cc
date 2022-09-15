@@ -10,12 +10,13 @@ bitset<5> shift(bitset<5> half_key);
 bitset<8> p8(bitset<5> left, bitset<5> right);
 bitset<8> IP(bitset<8> ch);
 bitset<8> EP(bitset<4> half);
-bitset<4> Sub(bitset<8> exp, bitset<8> key, bitset<4> left, bitset<4> right);
+bitset<4> Sub(bitset<8> exp, bitset<8> key);
 bitset<2> get_lsub(bitset<4> left);
 bitset<2> get_rsub(bitset<4> right);
 bitset<4> p4(bitset<2> left, bitset<2> right);
 bitset<8> IP_1(bitset<4> left, bitset<4> right);
 
+int debug = 0;
 
 int main() {
     string cipher_text, key;
@@ -51,51 +52,53 @@ int main() {
     bitset<8> k2 = p8(left_shift_2, right_shift_2);
     // key gen done
 
-    cout << "key: " << key << endl;
-    cout << "key_bits after p10: " << key_bits << endl;
-    cout << "left half: " << left_half << endl;
-    cout << "right half: " << right_half << endl;
-    cout << "left half shifted 1: " << left_shift_1 << endl;
-    cout << "right half shifted 1: " << right_shift_1 << endl;
-    cout << "left half shifted 2: " << left_shift_2 << endl;
-    cout << "right half shifted 2: " << right_shift_2 << endl;
-    cout << "k1: " << k1 << endl;
-    cout << "k2: " << k2 << endl;
+    if (debug) {
+        cout << "key: " << key << endl;
+        cout << "key_bits after p10: " << key_bits << endl;
+        cout << "left half: " << left_half << endl;
+        cout << "right half: " << right_half << endl;
+        cout << "left half shifted 1: " << left_shift_1 << endl;
+        cout << "right half shifted 1: " << right_shift_1 << endl;
+        cout << "left half shifted 2: " << left_shift_2 << endl;
+        cout << "right half shifted 2: " << right_shift_2 << endl;
+        cout << "k1: " << k1 << endl;
+        cout << "k2: " << k2 << endl;
+    }
 
     // decrypt
     bitset<8> payload;
     for (size_t i = 0; i < cipher_text.length(); i++) {
         bitset<8> cipher_ch ((int)cipher_text[i]);
-        cout << "cipher_ch: " << cipher_ch << endl;
  
         cipher_ch = IP(cipher_ch);
-        cout << "IP: " << cipher_ch << endl;
+        if (debug) cout << "IP: " << cipher_ch << endl;
 
         bitset<4> left, right;
         for (size_t i = 0; i < 4; i++) {
             right[i] = cipher_ch[i];
             left[i] = cipher_ch[i+4];
         }
-        cout << "left of IP: " << left << endl;
-        cout << "right of IP: " << right << endl;
+        if (debug) cout << "left of IP: " << left << endl;
+        if (debug) cout << "right of IP: " << right << endl;
 
         bitset<8> expand (EP(right));
-        cout << "expand of right half: " << expand << endl;
-        bitset<4> feistel (Sub(expand, k1, left, right));
-        cout << "feistel 1: " << feistel << endl;
+        if (debug) cout << "expand of right half: " << expand << endl;
+        bitset<4> feistel (Sub(expand, k2));
+        feistel = feistel ^ left;
+        if (debug) cout << "feistel 1: " << feistel << endl;
 
         //feistel and right swap
         bitset<8> expand_2 (EP(feistel));
-        cout << "expand 2 of right half: " << expand_2 << endl;
-        bitset<4> feistel_2 (Sub(expand_2, k2, right, feistel));
-        cout << "feistel 2: " << feistel_2 << endl;
+        if (debug) cout << "expand 2 of right half: " << expand_2 << endl;
+        bitset<4> feistel_2 (Sub(expand_2, k1));
+        feistel_2 = feistel_2 ^ right;
+        if (debug) cout << "feistel 2: " << feistel_2 << endl;
 
-        payload = IP_1(feistel, feistel_2);
+        payload = IP_1(feistel_2, feistel);
+        cout << payload << endl << char(payload.to_ulong()) << endl;
     }
     
-    cout << payload << endl;
-    
-    
+    cout << endl;
     return 0;
 }
 
@@ -166,24 +169,31 @@ bitset<8> EP(bitset<4> half) {
     return exp;
 }
 
-bitset<4> Sub(bitset<8> exp, bitset<8> key, bitset<4> left, bitset<4> right) {
+bitset<4> Sub(bitset<8> exp, bitset<8> key) {
     exp = exp ^ key;    // xor
 
-    cout << "xor: " << exp << endl;
+    if (debug) cout << "xor: " << exp << endl;
+
+    bitset<4> left, right;
+    for (size_t i = 0; i < 4; i++) {
+        right[i] = exp[i];
+        left[i] = exp[i+4];
+    }
 
     bitset<2> lsub, rsub;
     lsub = get_lsub(left);
     rsub = get_rsub(right);
-
-    cout << "lsub: " << lsub << endl;
-    cout << "rsub: " << rsub << endl;
+    
+    if (debug) cout << "left: " << left << endl << "right: " << right << endl;
+    if (debug) cout << "lsub: " << lsub << endl;
+    if (debug) cout << "rsub: " << rsub << endl;
     
     bitset<4> perm;
     perm = p4(lsub, rsub);
 
-    cout << "p4: " << perm << endl;
+    if (debug) cout << "p4: " << perm << endl;
 
-    return perm ^ left;
+    return perm;
 }
 
 bitset<2> get_lsub(bitset<4> left) {
