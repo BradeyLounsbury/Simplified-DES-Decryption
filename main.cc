@@ -10,7 +10,11 @@ bitset<5> shift(bitset<5> half_key);
 bitset<8> p8(bitset<5> left, bitset<5> right);
 bitset<8> IP(bitset<8> ch);
 bitset<8> EP(bitset<4> half);
-bitset<8> IP_1(bitset<8> ch);
+bitset<4> Sub(bitset<8> exp, bitset<8> key, bitset<4> left, bitset<4> right);
+bitset<2> get_lsub(bitset<4> left);
+bitset<2> get_rsub(bitset<4> right);
+bitset<4> p4(bitset<2> left, bitset<2> right);
+bitset<8> IP_1(bitset<4> left, bitset<4> right);
 
 
 int main() {
@@ -59,6 +63,7 @@ int main() {
     cout << "k2: " << k2 << endl;
 
     // decrypt
+    bitset<8> payload;
     for (size_t i = 0; i < cipher_text.length(); i++) {
         bitset<8> cipher_ch ((int)cipher_text[i]);
         cout << "cipher_ch: " << cipher_ch << endl;
@@ -71,14 +76,24 @@ int main() {
             right[i] = cipher_ch[i];
             left[i] = cipher_ch[i+4];
         }
+        cout << "left of IP: " << left << endl;
+        cout << "right of IP: " << right << endl;
 
         bitset<8> expand (EP(right));
-        bitset<4> feistel (Sub(expand, k1));
-        
-        
+        cout << "expand of right half: " << expand << endl;
+        bitset<4> feistel (Sub(expand, k1, left, right));
+        cout << "feistel 1: " << feistel << endl;
+
+        //feistel and right swap
+        bitset<8> expand_2 (EP(feistel));
+        cout << "expand 2 of right half: " << expand_2 << endl;
+        bitset<4> feistel_2 (Sub(expand_2, k2, right, feistel));
+        cout << "feistel 2: " << feistel_2 << endl;
+
+        payload = IP_1(feistel, feistel_2);
     }
     
-
+    cout << payload << endl;
     
     
     return 0;
@@ -151,76 +166,210 @@ bitset<8> EP(bitset<4> half) {
     return exp;
 }
 
-bitset<4> Sub(bitset<8> exp, bitset<8> key) {
-    exp = exp xor key;
+bitset<4> Sub(bitset<8> exp, bitset<8> key, bitset<4> left, bitset<4> right) {
+    exp = exp ^ key;    // xor
 
-    bitset<4> left, right;
-    for (size_t i = 0; i < 4; i++) {
-        right[i] = cipher_ch[i];
-        left[i] = cipher_ch[i+4];
-    }
+    cout << "xor: " << exp << endl;
+
     bitset<2> lsub, rsub;
     lsub = get_lsub(left);
     rsub = get_rsub(right);
 
+    cout << "lsub: " << lsub << endl;
+    cout << "rsub: " << rsub << endl;
+    
+    bitset<4> perm;
+    perm = p4(lsub, rsub);
+
+    cout << "p4: " << perm << endl;
+
+    return perm ^ left;
 }
 
 bitset<2> get_lsub(bitset<4> left) {
-    bitset<2> lsub;
+    string sub;
     if (left.test(3)) {
-        if (left.test(0)) {  // row: 3
+        if (left.test(0)) {         // row: 3
             if (left.test(2)) {
                 if (left.test(1)) { // column: 3
-                    lsub = "10";
+                    sub = "10";
                 }
-                else {  // column: 2
-                    lsub = "11";
+                else {              // column: 2
+                    sub = "11";
                 }
             }
             else {
                 if (left.test(1)) { // column: 1
-                    lsub = "01";
+                    sub = "01";
                 }
-                else {  // column: 0
-                    lsub = "11";
+                else {              // column: 0
+                    sub = "11";
                 }
             }
         }
-        else {  // row: 2
+        else {                      // row: 2
             if (left.test(2)) {
                 if (left.test(1)) { // column: 3
-                    lsub = "11";
+                    sub = "11";
                 }
-                else {  // column: 2
-                    lsub = "01";
+                else {              // column: 2
+                    sub = "01";
                 }
             }
             else {
                 if (left.test(1)) { // column: 1
-                    lsub = "10";
+                    sub = "10";
                 }
-                else {  // column: 0
-                    lsub = "00";
+                else {              // column: 0
+                    sub = "00";
                 }
             }
         }
     }
+    else {
+        if (left.test(0)) {         // row: 1
+            if (left.test(2)) {
+                if (left.test(1)) { // column: 3
+                    sub = "00";
+                }
+                else {              // column: 2
+                    sub = "01";
+                }
+            }
+            else {
+                if (left.test(1)) { // column: 1
+                    sub = "10";
+                }
+                else {              // column: 0
+                    sub = "11";
+                }
+            }
+        }
+        else {                      // row: 0
+            if (left.test(2)) {
+                if (left.test(1)) { // column: 3
+                    sub = "10";
+                }
+                else {              // column: 2
+                    sub = "11";
+                }
+            }
+            else {
+                if (left.test(1)) { // column: 1
+                    sub = "00";
+                }
+                else {              // column: 0
+                    sub = "01";
+                }
+            }
+        }
+    }
+    bitset<2> lsub (sub);
+    return lsub;
 }
 
 bitset<2> get_rsub(bitset<4> right) {
-    bitset<2> rsub;
+    string sub;
+    if (right.test(3)) {
+        if (right.test(0)) {         // row: 3
+            if (right.test(2)) {
+                if (right.test(1)) { // column: 3
+                    sub = "11";
+                }
+                else {              // column: 2
+                    sub = "00";
+                }
+            }
+            else {
+                if (right.test(1)) { // column: 1
+                    sub = "01";
+                }
+                else {              // column: 0
+                    sub = "10";
+                }
+            }
+        }
+        else {                      // row: 2
+            if (right.test(2)) {
+                if (right.test(1)) { // column: 3
+                    sub = "00";
+                }
+                else {              // column: 2
+                    sub = "01";
+                }
+            }
+            else {
+                if (right.test(1)) { // column: 1
+                    sub = "00";
+                }
+                else {              // column: 0
+                    sub = "11";
+                }
+            }
+        }
+    }
+    else {
+        if (right.test(0)) {         // row: 1
+            if (right.test(2)) {
+                if (right.test(1)) { // column: 3
+                    sub = "11";
+                }
+                else {              // column: 2
+                    sub = "01";
+                }
+            }
+            else {
+                if (right.test(1)) { // column: 1
+                    sub = "00";
+                }
+                else {              // column: 0
+                    sub = "10";
+                }
+            }
+        }
+        else {                      // row: 0
+            if (right.test(2)) {
+                if (right.test(1)) { // column: 3
+                    sub = "11";
+                }
+                else {              // column: 2
+                    sub = "10";
+                }
+            }
+            else {
+                if (right.test(1)) { // column: 1
+                    sub = "01";
+                }
+                else {              // column: 0
+                    sub = "00";
+                }
+            }
+        }
+    }
+    bitset<2> lsub (sub);
+    return lsub;
 }
 
-bitset<8> IP_1(bitset<8> ch) {
+bitset<4> p4(bitset<2> left, bitset<2> right) {
+    bitset<4> perm;
+
+    perm[3] = left[0];
+    perm[2] = right[0];
+    perm[1] = right[1];
+    perm[0] = left[1];
+    return perm;
+}
+
+bitset<8> IP_1(bitset<4> left, bitset<4> right) {
     bitset<8> perm;
 
-    perm[7] = ch[4];
-    perm[6] = ch[7];
-    perm[5] = ch[5];
-    perm[4] = ch[3];
-    perm[3] = ch[1];
-    perm[2] = ch[6];
-    perm[1] = ch[0];
-    perm[0] = ch[2];
+    perm[7] = left[0];
+    perm[6] = left[3];
+    perm[5] = left[1];
+    perm[4] = right[3];
+    perm[3] = right[1];
+    perm[2] = left[2];
+    perm[1] = right[0];
+    perm[0] = right[2];
     return perm;
 }
